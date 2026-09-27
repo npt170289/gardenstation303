@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   
   // KEY MỚI NHẤT BRO GỬI
-  const FALLBACK_KEY = 'oywdxii2elrtsfs9toipmy7nagcnj6wxznxiugy19q55iddiiwsmfqyjwkjufzet';
+  const FALLBACK_KEY = 'oywdxii2elrtsfs9to1pmy7nagcnj6wxznxiugy19q551dd11wsmfqyjwkjufzet';
   
   if (req.method === 'GET') {
     const key = (process.env.PI_API_KEY || FALLBACK_KEY || '').trim();
