@@ -4,8 +4,8 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   
-  // KEY MỚI NHẤT BRO GỬI - oywdxii2elrtsfs9toipmy7nagcnj6wxznxiugy19q55iddiiwsmfqyjwkjufzet
-  const FALLBACK_KEY = 'oywdxii2elrtsfs9toipmy7nagcnj6wxznxiugy19q55iddiiwsmfqyjwkjufzet';
+  // KEY MỚI NHẤT BRO GỬI - oywdxii2...
+  const FALLBACK_KEY = 'oywdxii2elrtsfs9to1pmy7nagcnj6wxznxiugy19q551dd11wsmfqyjwkjufzet';
   
   if (req.method === 'GET') {
     const key = (process.env.PI_API_KEY || FALLBACK_KEY || '').trim();
@@ -18,6 +18,7 @@ export default async function handler(req, res) {
       keySuffix: key ? '...'+key.slice(-6) : null,
       usingEnv: !!process.env.PI_API_KEY,
       usingFallback: !process.env.PI_API_KEY,
+      envPrefix: process.env.PI_API_KEY ? process.env.PI_API_KEY.slice(0,12)+'...' : null,
       timestamp: new Date().toISOString()
     });
   }
@@ -32,7 +33,7 @@ export default async function handler(req, res) {
 
     console.log('=== APPROVE WITH KEY oywdxii2... ===');
     console.log('PaymentId:', paymentId);
-    console.log('Key prefix:', apiKey.slice(0,8), 'len:', apiKey.length);
+    console.log('Key prefix:', apiKey.slice(0,8), 'len:', apiKey.length, 'usingEnv:', !!process.env.PI_API_KEY);
 
     console.log('Step 1: GET payment...');
     const getRes = await fetch(`https://api.testnet.minepi.com/v2/payments/${paymentId}`, {
@@ -49,7 +50,8 @@ export default async function handler(req, res) {
         step:'GET payment',
         error:getData, 
         hint: getRes.status===404 ? 'Payment not found - key oywdxii2... khong phai cua App npt170289.github.io HOAC payment het han' : 'GET failed',
-        keyPrefix: apiKey.slice(0,12)
+        keyPrefix: apiKey.slice(0,12),
+        envPrefix: process.env.PI_API_KEY ? process.env.PI_API_KEY.slice(0,12) : null
       });
     }
 
