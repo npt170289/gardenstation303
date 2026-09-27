@@ -19,16 +19,18 @@ export default async function handler(req, res) {
       return res.status(500).json({success:false, error:'PI_API_KEY not set in Vercel'});
     }
 
+    console.log('COMPLETE START', paymentId, txid);
     const piRes = await fetch(`https://api.testnet.minepi.com/v2/payments/${paymentId}/complete`, {
       method: 'POST',
       headers: {
-        'X-API-Key': process.env.PI_API_KEY,
+        'X-API-Key': process.env.PI_API_KEY.trim(),
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({txid})
     });
-    const data = await piRes.json();
-    console.log('Complete:', paymentId, txid, data);
+    const text = await piRes.text();
+    let data; try{ data = JSON.parse(text); }catch{ data = {raw:text}; }
+    console.log('COMPLETE RES', piRes.status, data);
     return res.status(piRes.ok ? 200 : 400).json({success: piRes.ok, data});
   } catch(e){
     console.error('Complete error:', e);
