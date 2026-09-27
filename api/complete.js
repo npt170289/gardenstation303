@@ -4,8 +4,18 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   
+  // KEY MỚI NHẤT BRO GỬI
+  const FALLBACK_KEY = 'oywdxii2elrtsfs9toipmy7nagcnj6wxznxiugy19q55iddiiwsmfqyjwkjufzet';
+  
   if (req.method === 'GET') {
-    return res.status(200).json({alive:true, message:'Complete API ready - use POST with paymentId and txid', hasKey: !!process.env.PI_API_KEY});
+    const key = (process.env.PI_API_KEY || FALLBACK_KEY || '').trim();
+    return res.status(200).json({
+      alive:true, 
+      message:'Complete API ready - key oywdxii2...',
+      hasKey: !!key,
+      keyPrefix: key.slice(0,12)+'...',
+      usingFallback: !process.env.PI_API_KEY
+    });
   }
   
   if (req.method !== 'POST') return res.status(405).json({success:false, error:'Method not allowed, use POST'});
@@ -14,16 +24,16 @@ export default async function handler(req, res) {
     const { paymentId, txid } = req.body || {};
     if (!paymentId || !txid) return res.status(400).json({success:false, error:'Missing paymentId or txid'});
     
-    if (!process.env.PI_API_KEY) {
-      console.error('PI_API_KEY missing in env');
-      return res.status(500).json({success:false, error:'PI_API_KEY not set in Vercel'});
+    const apiKey = (process.env.PI_API_KEY || FALLBACK_KEY || '').trim();
+    if (!apiKey) {
+      return res.status(500).json({success:false, error:'PI_API_KEY not set'});
     }
 
-    console.log('COMPLETE START', paymentId, txid);
+    console.log('COMPLETE START', paymentId, txid.slice(0,20)+'...');
     const piRes = await fetch(`https://api.testnet.minepi.com/v2/payments/${paymentId}/complete`, {
       method: 'POST',
       headers: {
-        'X-API-Key': process.env.PI_API_KEY.trim(),
+        'X-API-Key': apiKey,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({txid})
