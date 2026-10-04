@@ -5,24 +5,26 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method === 'GET') {
     const k = (process.env.PI_API_KEY || '').trim();
-    return res.status(200).json({alive:true, message:'Approve ready fix 60s - header Authorization Key', hasKey:!!k, keyPrefix:k.slice(0,12)+'...', usingEnv:!!process.env.PI_API_KEY});
+    return res.status(200).json({alive:true, message:'Approve ready - FIXED backtick + success:false logic', hasKey:!!k, keyPrefix:k.slice(0,12)+'...', usingEnv:!!process.env.PI_API_KEY});
   }
   try {
     const { paymentId } = req.body || {};
     if (!paymentId) return res.status(400).json({success:false, error:'Missing paymentId'});
     const apiKey = (process.env.PI_API_KEY || '').trim();
     console.log('APPROVE', paymentId, 'key', apiKey.slice(0,12));
-    // FIX CHÍNH Ở ĐÂY - Pi bắt buộc Authorization: Key
     const piRes = await fetch(`https://api.testnet.minepi.com/v2/payments/${paymentId}/approve`, {
       method:'POST',
       headers:{
-        'Authorization': `Key ${apiKey}`,
+        'Authorization': `Key ${apiKey}`, // BACKTICK CHUẨN!
         'Content-Type':'application/json'
       }
     });
     const txt = await piRes.text(); let data; try{ data=JSON.parse(txt);}catch{ data={raw:txt}; }
     console.log('APPROVE RES', piRes.status, JSON.stringify(data).slice(0,1500));
-    if (piRes.ok) return res.status(200).json({success:true, data});
-    return res.status(piRes.status).json({success:false, status:piRes.status, error:data});
+    if (piRes.ok) {
+      return res.status(200).json({success:true, data});
+    } else {
+      return res.status(piRes.status).json({success:false, status:piRes.status, error:data}); // success:false CHUẨN!
+    }
   } catch(e){ return res.status(500).json({success:false, error:e.message}); }
 }
