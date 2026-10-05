@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Spa Khai Hoan - Pi Testnet</title>
+<title>Spa Khai Hoan - Pi Mainnet</title>
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 <style>
 body{font-family:sans-serif;background:#f5f5f5;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0}
@@ -16,53 +16,39 @@ button{background:#6a5af9;color:#fff;border:0;padding:12px 20px;border-radius:10
 <body>
 <div class="card">
 <h1>Spa Khai Hoan</h1>
-<p>Thanh toan bang Pi - Testnet</p>
+<p>Thanh toan Pi Mainnet</p>
 <button id="btn">Thanh toan 1 Pi</button>
-<div id="log">San sang</div>
+<div id="log">San sang Mainnet</div>
 </div>
 <script>
-const log = (m)=>{document.getElementById('log').innerHTML+=`<br>${m}`; console.log(m);}
+const log = (m)=>{document.getElementById('log').innerHTML+=`<br>${m}`;}
 window.addEventListener('load', ()=>{
-  Pi.init({version:"2.0", sandbox: true});
-  log('Pi SDK TESTNET san sang - sandbox:true');
+  Pi.init({version:"2.0"});
+  log('Pi SDK MAINNET san sang');
 });
 document.getElementById('btn').onclick = async ()=>{
   try{
-    log('Authenticating...');
-    const auth = await Pi.authenticate(['username','payments'], (payment)=>{ log('Incomplete payment found: '+payment.identifier); });
-    log('@'+auth.user.username+' - Auth OK');
-    
-    log('Creating TESTNET payment...');
+    const auth = await Pi.authenticate(['username','payments']);
+    log('@'+auth.user.username);
     await Pi.createPayment({
       amount: 1,
-      memo: "Test A2U Lovely - Testnet only",
-      metadata: {service:"spa-test", env:"testnet"}
+      memo: "Spa Khai Hoan Mainnet",
+      metadata: {service:"spa-mainnet"}
     },{
       onReadyForServerApproval: async (id)=>{
-        log('PaymentId: '+id+' -> Calling /api/approve');
-        const r = await fetch("https://gardenstation303.vercel.app/api/approve", {
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({paymentId:id})
-        });
-        const j = await r.json();
-        log('Approve: ' + JSON.stringify(j).substring(0,200));
-        if(!r.ok) throw new Error('Approve failed: '+JSON.stringify(j));
+        log('Approve '+id);
+        const r = await fetch("/api/approve",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({paymentId:id})});
+        const j = await r.json(); log('Approve: '+JSON.stringify(j));
       },
       onReadyForServerCompletion: async (id,txid)=>{
-        log('TXID: '+txid+' -> Calling /api/complete');
-        const r = await fetch("https://gardenstation303.vercel.app/api/complete", {
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({paymentId:id, txid:txid})
-        });
-        const j = await r.json();
-        log('Complete: '+(j.success?'XONG 1 TK!':JSON.stringify(j)));
+        log('Complete '+txid);
+        const r = await fetch("/api/complete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({paymentId:id,txid:txid})});
+        const j = await r.json(); log('Complete: '+JSON.stringify(j));
       },
-      onCancel: (id)=>log('Da huy: '+id),
-      onError: (e,p)=>log('Loi SDK: '+(e.message||e)+' | payment:'+JSON.stringify(p))
+      onCancel: (id)=>log('Huy: '+id),
+      onError: (e)=>log('Loi: '+e.message)
     });
-  }catch(e){log('Loi catch: '+(e.message||e)); console.error(e);}
+  }catch(e){log('Loi: '+e.message)}
 };
 </script>
 </body>
