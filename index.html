@@ -37,7 +37,7 @@ document.getElementById('btn').onclick = async ()=>{
     },{
       onReadyForServerApproval: async (id)=>{
         log('PaymentId: '+id+' -> Approve...');
-        const r = await fetch("https://gardenstation303.vercel.app/api/approve", {
+        const r = await fetch("/api/approve", {
           method:"POST",
           headers:{"Content-Type":"application/json"},
           body: JSON.stringify({paymentId:id})
@@ -47,7 +47,7 @@ document.getElementById('btn').onclick = async ()=>{
       },
       onReadyForServerCompletion: async (id,txid)=>{
         log('TXID: '+txid+' -> Complete...');
-        const r = await fetch("https://gardenstation303.vercel.app/api/complete", {
+        const r = await fetch("/api/complete", {
           method:"POST",
           headers:{"Content-Type":"application/json"},
           body: JSON.stringify({paymentId:id, txid:txid})
