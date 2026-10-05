@@ -3,50 +3,75 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Spa Khai Hoan - Pi Mainnet</title>
+<title>Spa Khai Hoan - Pi Testnet - Fix 404</title>
 <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 <style>
 body{font-family:sans-serif;background:#f5f5f5;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0}
-.card{background:#fff;padding:24px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.1);text-align:center;max-width:360px;width:90%}
-h1{margin:0 0 8px}
-button{background:#6a5af9;color:#fff;border:0;padding:12px 20px;border-radius:10px;font-size:16px;width:100%;margin-top:12px}
-#log{margin-top:16px;font-size:13px;text-align:left;background:#111;color:#0f0;padding:10px;border-radius:8px;min-height:60px;word-break:break-all}
+.card{background:#fff;padding:24px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.1);text-align:center;max-width:380px;width:90%}
+button{background:#6a5af9;color:#fff;border:0;padding:12px 20px;border-radius:10px;font-size:16px;width:100%;margin-top:8px}
+button.clear{background:#ff4d4d;margin-top:12px}
+#log{margin-top:16px;font-size:12px;text-align:left;background:#111;color:#0f0;padding:10px;border-radius:8px;min-height:80px;word-break:break-all;overflow:auto;max-height:220px}
 </style>
 </head>
 <body>
 <div class="card">
-<h1>Spa Khai Hoan</h1>
-<p>Thanh toan Pi Mainnet</p>
-<button id="btn">Thanh toan 1 Pi</button>
-<div id="log">San sang Mainnet</div>
+<h1>Spa Khai Hoan Testnet</h1>
+<p>Fix 404 - Clear ket + Pay</p>
+<button id="btnClear" class="clear">1. Clear ket (incomplete payments)</button>
+<button id="btn">2. Thanh toan 1 Pi Test - Fix 60s</button>
+<div id="log">San sang Testnet</div>
 </div>
 <script>
-const log = (m)=>{document.getElementById('log').innerHTML+=`<br>${m}`;}
+const API_BASE = "https://gardenstation303.vercel.app"; // DOI THANH https://khaihoanspa.vercel.app NEU ONG CO PROJECT RIENG
+const log = (m)=>{document.getElementById('log').innerHTML+=`<br>> ${m}`; console.log(m);}
 window.addEventListener('load', ()=>{
-  Pi.init({version:"2.0"});
-  log('Pi SDK MAINNET san sang');
+  Pi.init({version:"2.0", sandbox:true}); // Testnet bat buoc sandbox:true
+  log('Pi SDK TESTNET san sang');
+  log('API: '+API_BASE);
 });
+document.getElementById('btnClear').onclick = async ()=>{
+  try{
+    const auth = await Pi.authenticate(['username','payments']);
+    log('Clear cho @'+auth.user.username);
+    const payments = await Pi.getIncompletePayments();
+    log('Tim thay '+payments.length+' payment ket');
+    for(let p of payments){
+      log('Huy ket: '+p.identifier);
+      await fetch(`${API_BASE}/api/complete`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({paymentId:p.identifier, txid:null, cancelled:true})}).catch(()=>{});
+      // Pi SDK se tu dong cancel o client, backend chi log
+    }
+    log('Da clear xong, thu Pay lai');
+  }catch(e){log('Clear Loi: '+e.message)}
+};
 document.getElementById('btn').onclick = async ()=>{
   try{
     const auth = await Pi.authenticate(['username','payments']);
     log('@'+auth.user.username);
     await Pi.createPayment({
       amount: 1,
-      memo: "Spa Khai Hoan Mainnet",
-      metadata: {service:"spa-mainnet"}
+      memo: "Spa Khai Hoan - 1 Pi Test - Fix 60s",
+      metadata: {service:"spa-test-fix-60s"}
     },{
       onReadyForServerApproval: async (id)=>{
         log('Approve '+id);
-        const r = await fetch("/api/approve",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({paymentId:id})});
-        const j = await r.json(); log('Approve: '+JSON.stringify(j));
+        try{
+          const r = await fetch(`${API_BASE}/api/approve`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({paymentId:id})});
+          const txt = await r.text();
+          log('Approve: '+r.status+' '+txt.slice(0,200));
+          if(!r.ok) throw new Error(txt);
+        }catch(e){ log('Approve Loi: '+e.message); }
       },
       onReadyForServerCompletion: async (id,txid)=>{
         log('Complete '+txid);
-        const r = await fetch("/api/complete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({paymentId:id,txid:txid})});
-        const j = await r.json(); log('Complete: '+JSON.stringify(j));
+        try{
+          const r = await fetch(`${API_BASE}/api/complete`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({paymentId:id,txid:txid})});
+          const txt = await r.text();
+          log('Complete: '+r.status+' '+txt.slice(0,200));
+          if(r.ok) log('THANH CONG! Check vi KUVEP');
+        }catch(e){ log('Complete Loi: '+e.message); }
       },
       onCancel: (id)=>log('Huy: '+id),
-      onError: (e)=>log('Loi: '+e.message)
+      onError: (e)=>log('Loi SDK: '+e.message)
     });
   }catch(e){log('Loi: '+e.message)}
 };
